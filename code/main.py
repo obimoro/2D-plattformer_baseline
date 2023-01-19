@@ -16,6 +16,7 @@
 
 import pygame as pg
 import engine
+import utils
 
 # function
 def drawText(text, x, y):
@@ -48,12 +49,15 @@ font = pg.font.Font('graphics/font/Grand9K Pixel.ttf', 24)
 #game states = playing // win // lose
 game_state = 'playing'
 
+
+entities = []
+
 # player
 # player image
-player_image = pg.image.load('graphics/DinoSprites - doux/idle/idle_0.png').convert_alpha()
+player_image = pg.image.load('graphics/DinoSprites - doux/idle/idle_00.png').convert_alpha()
 # player size
-player_width = 72
-player_height = 72
+player_width = 32
+player_height = 51
 # player attri
 player_x = 300
 player_y = 0
@@ -65,10 +69,10 @@ player_state = 'idle' # or 'walking'
 
 player_animations = {
     'idle' : engine.Animation([
-            pg.image.load('graphics/DinoSprites - doux/idle/idle_0.png').convert_alpha(),
-            pg.image.load('graphics/DinoSprites - doux/idle/idle_1.png').convert_alpha(),
-            pg.image.load('graphics/DinoSprites - doux/idle/idle_2.png').convert_alpha(),
-            #pg.image.load('graphics/DinoSprites - doux/idle/idle_3.png').convert_alpha(),
+            pg.image.load('graphics/DinoSprites - doux/idle/idle_00.png').convert_alpha(),
+            pg.image.load('graphics/DinoSprites - doux/idle/idle_01.png').convert_alpha(),
+            pg.image.load('graphics/DinoSprites - doux/idle/idle_02.png').convert_alpha(),
+            pg.image.load('graphics/DinoSprites - doux/idle/idle_03.png').convert_alpha(),
     ]),
     'walking': engine.Animation([
             pg.image.load('graphics/DinoSprites - doux/walking/walking_1.png').convert_alpha(),
@@ -88,20 +92,10 @@ platforms = [
 ]
 
 # coins
-#coin_image = pg.image.load('graphics/coin/coin_0.png').convert_alpha()
-coin_animation = engine.Animation([
-    pg.image.load('graphics/coin/coin_0.png').convert_alpha(),
-    pg.image.load('graphics/coin/coin_1.png').convert_alpha(),
-    pg.image.load('graphics/coin/coin_2.png').convert_alpha(),
-    pg.image.load('graphics/coin/coin_3.png').convert_alpha(),
-    pg.image.load('graphics/coin/coin_4.png').convert_alpha(),
-    pg.image.load('graphics/coin/coin_5.png').convert_alpha()
-])
+coin_image = pg.image.load('graphics/coin/coin_5.png').convert_alpha()
 
-coins = [
-        pg.Rect(100, 200, 23, 23),
-        pg.Rect(200, 250, 23, 23)
-]
+entities.append(utils.makeCoin(100, 200))
+entities.append(utils.makeCoin(200, 250))
 
 score = 0
 
@@ -131,12 +125,12 @@ while running:
         keys = pg.key.get_pressed()    
         # left
         if keys[pg.K_a]:
-            new_player_x -= 2
+            new_player_x -= 3
             player_direction = 'left'
             player_state = 'walking'
         # right
         if keys[pg.K_d]:
-            new_player_x += 2
+            new_player_x += 3
             player_direction = 'right'
             player_state = 'walking'
 
@@ -150,21 +144,21 @@ while running:
         if keys[pg.K_ESCAPE]:
             running = False
 
-        print(player_state)
+
 
     # UPDATE -----
-
-
 
     if game_state == 'playing':
         # update player animation
         player_animations[player_state].update()
-        # update coin animation
-        coin_animation.update()
-        
-    
+        # update animations
+        for entity in entities:
+            entity.animations.animationList[entity.state].update()
+
         # horizontal movement
         new_player_rect = pg.Rect(new_player_x, player_y, player_width,player_height)
+        
+        
         x_collision = False
 
         # check against every platform 
@@ -202,15 +196,17 @@ while running:
 
         # see if any coins have been collected
         player_rect = pg.Rect(player_x, player_y, player_width, player_height)
-        for c in coins:
-            if c.colliderect(player_rect):
-                coins.remove(c)
-                score += 1
-                # change the game state
-                # if all coins are collected
-                if score >= 2:
-                    game_state = 'win'
 
+        # collection system
+        for entity in entities:
+            if entity.type == 'collectable':
+                if entity.position.rect.colliderect(player_rect):
+                    entities.remove(entity)
+                    score += 1
+                    # change the game state
+                    # if all coins are collected
+                    if score >= 2:
+                        game_state = 'win'
         
         # see if any enemies have been collided with
         for e in enemies:
@@ -230,20 +226,20 @@ while running:
     # Background
     screen.fill(ORANGE)
 
-
-
     # platform
     for p in platforms:
         pg.draw.rect(screen, GREY, p)
 
-    # coins
-    for c in coins:
-            #screen.blit(coin_image, (c[0],c[1]))
-            coin_animation.draw(screen, c.x, c.y, False, False)
+    # draw system
+    for entity in entities:
+        state = entity.state
+        animation = entity.animations.animationList[state]
+        animation.draw(screen, entity.position.rect.x, entity.position.rect.y, False, False)
 
     # enemies
     for e in enemies:
             screen.blit(enemy_image, (e[0],e[1]))
+
     # Player
     if player_direction == 'right':
         #screen.blit(player_image, (player_x,player_y))
@@ -252,12 +248,11 @@ while running:
         #screen.blit(pg.transform.flip(player_image, True, False), (player_x,player_y))
         player_animations[player_state].draw(screen, player_x, player_y, True, False)
 
-    
 
     # player information
 
     # score
-    #screen.blit(coin_image, (10, 50))
+    screen.blit(coin_image, (10, 50))
     drawText(str(score), 40, 42)
 
     
