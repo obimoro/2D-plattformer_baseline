@@ -1,6 +1,8 @@
 import pygame as pg
 import engine
 
+heart0 =  pg.image.load('graphics/heart/heart.png')
+
 coin0 = pg.image.load('graphics/coin/coin_0.png')
 coin1 = pg.image.load('graphics/coin/coin_1.png')
 coin2 = pg.image.load('graphics/coin/coin_2.png')
@@ -39,18 +41,24 @@ walking3 =  pg.image.load('graphics/DinoSprites - doux/walking/walking_4.png')
 walking4 =  pg.image.load('graphics/DinoSprites - doux/walking/walking_5.png')
 walking5 =  pg.image.load('graphics/DinoSprites - doux/walking/walking_6.png')
 
+jumping0 = pg.image.load('graphics/DinoSprites - doux/jumping/jumping_00.png')
+
 def makePlayer(x, y):
     entity = engine.Entity()
     entity.position = engine.Position(x,y,32,51)
     entityIdleAnimation = engine.Animation([idle0, idle1, idle2, idle3])
     entityWalkingAnimation = engine.Animation([walking0, walking1, walking2, walking3, walking4, walking5])
+    entityJumpingAnimation = engine.Animation([jumping0])
     entity.animations.add('idle', entityIdleAnimation)
     entity.animations.add('walking', entityWalkingAnimation)
+    entity.animations.add('jumping', entityJumpingAnimation)
+    
     entity.type = 'player'
     return entity
 
-
-def drawText(screen, font, color, text, x, y):
+pg.font.init()
+font = pg.font.Font('graphics/font/Grand9K Pixel.ttf', 24)
+def drawText(screen, color, text, x, y):
     text = font.render(text, False, color, None)
     text_rect = text.get_rect()
     text_rect.topleft = (x, y)

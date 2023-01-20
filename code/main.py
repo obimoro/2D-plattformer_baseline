@@ -36,22 +36,16 @@ screen = pg.display.set_mode((SCR_W, SCR_H))
 pg.display.set_caption('2D Platform')
 # timing
 clock = pg.time.Clock()
-# font
-font = pg.font.Font('graphics/font/Grand9K Pixel.ttf', 24)
+
 #game states = playing // win // lose
 game_state = 'playing'
 
-
-# Images
-coin_image = pg.image.load('graphics/coin/coin_5.png').convert_alpha()
-heart_image = pg.image.load('graphics/heart/heart.png').convert_alpha()
 
 # Player
 # player attri
 player_speed = 0
 player_acceleration = 0.2
-score = 0
-lives = 3
+player_on_ground = False
 
 
 
@@ -73,8 +67,10 @@ entities.append(enemy)
 
 player = utils.makePlayer(300, 0)
 player.camera = engine.Camera(10,10, 400, 400)
-player.camera.setWorldPos(300, 250)
+player.camera.setWorldPos(300, 0)
 player.camera.trackEntity(player)
+player.score = engine.Score()
+player.battle = engine.Battle()
 entities.append(player)
 
 cameraSystem = engine.CameraSystem()
@@ -105,8 +101,9 @@ while running:
             player.direction = 'right'
             player.state = 'walking'
 
-        if not keys[pg.K_a] and not keys[pg.K_d]:
+        if not keys[pg.K_a] and not keys[pg.K_d] and player_on_ground:
             player.state = 'idle'
+
 
         # jump ( if on the ground)
         if keys[pg.K_SPACE] and player_on_ground:
@@ -114,6 +111,16 @@ while running:
 
         if keys[pg.K_ESCAPE]:
             running = False
+
+        # control zoom level of the player camera
+        # zoom out
+        if keys[pg.K_q]:
+            player.camera.zoomLevel -= 0.01
+            if player.camera.zoomLevel < 0.05:
+                player.camera.zoomLevel = 0.05
+        # zoom in
+        if keys[pg.K_e]:
+            player.camera.zoomLevel += 0.01
 
 
     # UPDATE -----
@@ -168,24 +175,24 @@ while running:
             if entity.type == 'collectable':
                 if entity.position.rect.colliderect(player_rect):
                     entities.remove(entity)
-                    score += 1
+                    player.score.score += 1
                     # change the game state
                     # if all coins are collected
-                    if score >= 2:
+                    if player.score.score >= 2:
                         game_state = 'win'
         
         # enemy system
         for entity in entities:
             if entity.type == 'dangerous':
                 if entity.position.rect.colliderect(player_rect):
-                    lives -= 1
+                    player.battle.lives -= 1
                     # reste player position
                     player.position.rect.x = 300
                     player.position.rect.y = 0
                     player_speed = 0    
                 # change the game state 
                 # if no lives remaining
-                if lives <= 0:
+                if player.battle.lives <= 0:
                     game_state = 'lose'
         
 
@@ -196,24 +203,6 @@ while running:
 
     cameraSystem.update(screen, entities, platforms)
 
-#    # draw system
-#
-#    # player information
-#    # score
-#    screen.blit(coin_image, (10, 50))
-#    utils.drawText(screen, font, WHITE, str(score), 40, 42)
-#
-#    
-#    # lives
-#    for l in range(lives):
-#        screen.blit(heart_image, (0 + (l * 30), 0))
-#
-#    if game_state == 'win':
-#        utils.drawText(screen,font, WHITE, 'You win!', SCR_W // 2, SCR_H // 2)
-#        
-#    if game_state == 'lose':
-#        utils.drawText(screen, font, WHITE, 'You lose!', SCR_W // 2, SCR_H // 2)
-        
     # present screen
     pg.display.flip()
  
