@@ -17,6 +17,7 @@
 import pygame as pg
 import engine
 import utils
+import level
 
 # constant variables 
 # screen dimensions
@@ -48,22 +49,13 @@ player_acceleration = 0.2
 player_on_ground = False
 
 
-
-# platforms
-platforms = [
-    pg.Rect(100, 300, 400, 50),
-    pg.Rect(100, 250,  50, 50),
-    pg.Rect(450, 250,  50, 50)
-]
-
 entities = []
-entities.append(utils.makeCoin(100, 200))
-entities.append(utils.makeCoin(200, 250))
+coin1 = utils.makeCoin(100, 200)
+coin2 = utils.makeCoin(200, 250)
 
 enemy = utils.makeEnemy(150, 274)
 enemy.camera = engine.Camera(420,10, 200,200)
 enemy.camera.setWorldPos(150, 250)
-entities.append(enemy)
 
 player = utils.makePlayer(300, 0)
 player.camera = engine.Camera(10,10, 400, 400)
@@ -71,9 +63,34 @@ player.camera.setWorldPos(300, 0)
 player.camera.trackEntity(player)
 player.score = engine.Score()
 player.battle = engine.Battle()
-entities.append(player)
+
 
 cameraSystem = engine.CameraSystem()
+
+level1 = level.Level(
+    platforms=[
+        pg.Rect(100, 300, 400, 50),
+        pg.Rect(100, 250,  50, 50),
+        pg.Rect(450, 250,  50, 50)
+    ],
+    entities=[
+            player, enemy, coin1, coin2
+    ]
+)
+
+level2 = level.Level(
+    platforms=[
+        pg.Rect(100, 300, 400, 50),
+
+    ],
+    entities=[
+            player
+    ]
+)
+
+# set current level
+levels = [level1, level2]
+world = level1
 
 # game loop
 while running:
@@ -127,7 +144,7 @@ while running:
 
     if game_state == 'playing':
         # update animations
-        for entity in entities:
+        for entity in world.entities:
             entity.animations.animationList[entity.state].update()
 
         # horizontal movement
@@ -135,7 +152,7 @@ while running:
         x_collision = False
 
         # check against every platform 
-        for p in platforms:
+        for p in world.platforms:
             if p.colliderect(new_player_rect):
                 x_collision = True
                 break
@@ -152,7 +169,7 @@ while running:
         player_on_ground = False
 
         # check against every platform 
-        for p in platforms:
+        for p in world.platforms:
             if p.colliderect(new_player_rect):
                 y_collision = True
                 player_speed = 0
@@ -171,18 +188,19 @@ while running:
         player_rect = pg.Rect(int(player.position.rect.x), int(player.position.rect.y), player.position.rect.width, player.position.rect.height)
 
         # collection system
-        for entity in entities:
+        for entity in world.entities:
             if entity.type == 'collectable':
                 if entity.position.rect.colliderect(player_rect):
-                    entities.remove(entity)
+                    world.entities.remove(entity)
                     player.score.score += 1
                     # change the game state
                     # if all coins are collected
                     if player.score.score >= 2:
                         game_state = 'win'
+
         
         # enemy system
-        for entity in entities:
+        for entity in world.entities:
             if entity.type == 'dangerous':
                 if entity.position.rect.colliderect(player_rect):
                     player.battle.lives -= 1
@@ -201,7 +219,7 @@ while running:
     # Background
     screen.fill(BLACK)
 
-    cameraSystem.update(screen, entities, platforms)
+    cameraSystem.update(screen, world)
 
     # present screen
     pg.display.flip()

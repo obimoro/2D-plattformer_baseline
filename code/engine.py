@@ -8,12 +8,12 @@ class System():
     def check(self, entity):
         return True
 
-    def update(self, screen, entities, platforms):
-        for entity in entities:
+    def update(self, screen, world):
+        for entity in world.entities:
             if self.check(entity):
-                self.updateEntity(screen, entity,entities, platforms)
+                self.updateEntity(screen, entity, world)
 
-    def updateEntity(self, screen, entity,entities, platforms):
+    def updateEntity(self, screen, entity, world):
         pass
 
 
@@ -24,7 +24,7 @@ class CameraSystem(System):
     def check(self, entity):
        return entity.camera is not None
 
-    def updateEntity(self, screen, entity, entities, platforms):
+    def updateEntity(self, screen, entity, world):
 
         # set clipping rectangle
         cameraRect = entity.camera.rect
@@ -51,7 +51,7 @@ class CameraSystem(System):
 
         screen.fill((255,125,0))
         # render platforms
-        for p in platforms:
+        for p in world.platforms:
             newPosRect = pg.Rect(
                 (p.x * entity.camera.zoomLevel) + offsetX,
                 (p.y * entity.camera.zoomLevel) + offsetY,
@@ -60,7 +60,7 @@ class CameraSystem(System):
             pg.draw.rect(screen, (125,125,125), newPosRect)
 
         # render entities
-        for e in entities:
+        for e in world.entities:
             state = e.state
             animation = e.animations.animationList[state]
             animation.draw(screen,
